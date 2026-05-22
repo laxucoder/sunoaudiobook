@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Utility classes for animations */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.7s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Global Base Styles */
+body {
+  background-color: #0a0a14;
+  color: #eee;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Queue */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 9, 20, 0.5);
+}
+
+
+/* --- SMOOTH MUSIC VISUALIZER --- */
+@keyframes music-wave {
+  0% {
+    height: 20%;
+  }
+
+  50% {
+    height: 100%;
+  }
+
+  100% {
+    height: 50%;
+  }
+}
+
+.music-bar {
+  width: 4px;
+  background-color: #E50914;
+  /* Red color for active bars */
+  border-radius: 2px;
+  animation: music-wave 1s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+/* Staggered delays for the wave effect */
+.music-bar-1 {
+  animation-duration: 0.6s;
+  animation-delay: 0s;
+}
+
+.music-bar-2 {
+  animation-duration: 0.9s;
+  animation-delay: 0.2s;
+}
+
+.music-bar-3 {
+  animation-duration: 0.7s;
+  animation-delay: 0.4s;
+}
+
+
+
+@keyframes twinkle {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.4); }
+}
+
+@keyframes shine {
+  0% { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.4)); }
+  100% { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1)); }
+}
+
+@keyframes sparkle {
+  0% { opacity: 0; transform: scale(0.3) translate(-50%, -50%); }
+  50% { opacity: 1; transform: scale(1) translate(-50%, -50%); }
+  100% { opacity: 0; transform: scale(0.3) translate(-50%, -50%); }
+}
+
+.animate-twinkle {
+  animation: twinkle 2.4s infinite ease-in-out;
+}
+
+.animate-shine {
+  animation: shine 1.8s infinite alternate ease-in-out;
+}
+
+.animate-sparkle {
+  animation: sparkle 1.4s infinite ease-in-out;
+}
