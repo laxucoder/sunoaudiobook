@@ -34,7 +34,7 @@ const Navbar = ({ activePage, navigate, user, onLoginClick, onLogout, onSearchCh
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[#0a0a14]/90 backdrop-blur-xl border-b border-white/10">
-      <div className="max-w-[1400px] mx-auto px-6 py-4 flex justify-between items-center">
+      <div className="max-w-350 mx-auto px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-10">
           <div
             onClick={() => { navigate('home'); setSearchInput(''); onSearchChange(''); }}

@@ -59,13 +59,16 @@ body {
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(229, 9, 20, 0.5);
 }
@@ -114,19 +117,44 @@ body {
 
 
 @keyframes twinkle {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.08); filter: brightness(1.4); }
+
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+    filter: brightness(1.4);
+  }
 }
 
 @keyframes shine {
-  0% { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.4)); }
-  100% { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1)); }
+  0% {
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.4));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1));
+  }
 }
 
 @keyframes sparkle {
-  0% { opacity: 0; transform: scale(0.3) translate(-50%, -50%); }
-  50% { opacity: 1; transform: scale(1) translate(-50%, -50%); }
-  100% { opacity: 0; transform: scale(0.3) translate(-50%, -50%); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translate(-50%, -50%);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1) translate(-50%, -50%);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.3) translate(-50%, -50%);
+  }
 }
 
 .animate-twinkle {

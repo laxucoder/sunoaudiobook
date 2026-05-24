@@ -3,12 +3,12 @@ import {
   Plus, Edit, Trash2, CreditCard, Crown, Phone, Mail, HelpCircle, Loader,
   ChevronRight, LayoutDashboard, SettingsIcon, Home, Headphones, BookOpen,
   User, Play, Pause, X, SkipBack, SkipForward, Volume2, VolumeX,
-  ChevronDown, ListMusic, Music, Maximize2, Gauge
+  ChevronDown, ListMusic, Music, Maximize2, Gauge, Lock
 } from "lucide-react";
 
 import { formatTime } from '../utils/formatTime';
 
-const QueueList = ({ queue, currentIndex, setCurrentIndex, setShowQueueMobile, className, isPlaying, isEnded }) => {
+const QueueList = ({ queue, currentIndex, setCurrentIndex, setShowQueueMobile, className, isPlaying, isEnded, checkCanPlay, onRequirePurchase, track }) => {
   const getBarStyle = () => {
     if (isEnded) {
       return { height: '20%', animation: 'none', backgroundColor: '#4b5563' };
@@ -27,10 +27,17 @@ const QueueList = ({ queue, currentIndex, setCurrentIndex, setShowQueueMobile, c
       <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
         {queue.map((ep, idx) => {
           const isActive = idx === currentIndex;
+          const canPlay = checkCanPlay(ep);
           return (
             <div
               key={ep.id}
-              onClick={() => { setCurrentIndex(idx); setShowQueueMobile(false); }}
+              onClick={() => {
+                if (canPlay) {
+                  setCurrentIndex(idx); setShowQueueMobile(false);
+                } else {
+                  if (onRequirePurchase) onRequirePurchase(track);
+                }
+              }}
               className={`w-full flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 select-none border ${isActive
                 ? 'bg-[#181825] border-[#E50914]/30'
                 : 'border-transparent hover:bg-white/5'
@@ -49,9 +56,12 @@ const QueueList = ({ queue, currentIndex, setCurrentIndex, setShowQueueMobile, c
                   )}
                 </div>
                 <div className="flex flex-col truncate flex-1">
-                  <span className={`font-bold truncate text-sm ${isActive ? 'text-[#E50914]' : 'text-gray-300 group-hover:text-white'}`}>
-                    {ep.title}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-bold truncate text-sm ${isActive ? 'text-[#E50914]' : 'text-gray-300 group-hover:text-white'}`}>
+                      {ep.title}
+                    </span>
+                    {!canPlay && <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1 rounded shrink-0">PREMIUM</span>}
+                  </div>
                   <span className="text-xs text-gray-600">
                     {formatTime(ep.duration || 0)}
                   </span>
@@ -65,7 +75,7 @@ const QueueList = ({ queue, currentIndex, setCurrentIndex, setShowQueueMobile, c
   );
 };
 
-const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
+const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurchase }) => {
   const audioRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -81,9 +91,20 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
   const nextEpisode = currentIndex < queue.length - 1 ? queue[currentIndex + 1] : null;
   const streamUrl = activeEpisode?.streamUrl || (activeEpisode ? `${import.meta.env.VITE_BACKEND_URL}/api/audio/stream/${activeEpisode.id}` : '');
 
+  const checkCanPlay = (ep) => {
+    if (!ep) return false;
+    const isAdmin = user?.role === "ADMIN";
+    const isPremium = user?.isPremium;
+    const isOwner = user?.purchasedAudioIds?.includes(ep.id) ||
+      (track?.id && user?.purchasedAudioIds?.includes(track.id)) ||
+      (ep.playlistId && user?.purchasedAudioIds?.includes(ep.playlistId));
+    return isAdmin || isPremium || isOwner || ep.isFree;
+  };
+
   useEffect(() => {
     if (track) {
-      setCurrentIndex(0);
+      const firstPlayableIndex = queue.findIndex(ep => checkCanPlay(ep));
+      setCurrentIndex(firstPlayableIndex !== -1 ? firstPlayableIndex : 0);
       setIsExpanded(true);
       setIsEnded(false);
       setPlaybackRate(1);
@@ -140,8 +161,15 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
 
   const playNext = () => {
     if (currentIndex < queue.length - 1) {
-      setIsEnded(false);
-      setCurrentIndex(prev => prev + 1);
+      const nextEp = queue[currentIndex + 1];
+      if (checkCanPlay(nextEp)) {
+        setIsEnded(false);
+        setCurrentIndex(prev => prev + 1);
+      } else {
+        setIsEnded(true);
+        togglePlay(false);
+        if (onRequirePurchase) onRequirePurchase(track);
+      }
     } else {
       setIsEnded(true);
       togglePlay(false);
@@ -150,8 +178,13 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
 
   const playPrev = () => {
     if (currentIndex > 0) {
-      setIsEnded(false);
-      setCurrentIndex(prev => prev - 1);
+      const prevEp = queue[currentIndex - 1];
+      if (checkCanPlay(prevEp)) {
+        setIsEnded(false);
+        setCurrentIndex(prev => prev - 1);
+      } else {
+        if (onRequirePurchase) onRequirePurchase(track);
+      }
     }
   };
 
@@ -163,10 +196,10 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
 
   return (
     <div
-      className={`fixed z-[1000] bg-[#0a0a14] border-t border-white/10 overflow-hidden left-0 right-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+      className={`fixed z-[90] bg-[#0a0a14] border-t border-white/10 overflow-hidden left-0 right-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
         ${isExpanded
-          ? 'bottom-0 h-[100dvh]'  // Expanded: Covers entire screen (including nav)
-          : 'bottom-[72px] md:bottom-0 h-24' // Minimized: Lifts up 72px on mobile to show Nav, sits at 0 on desktop
+          ? 'bottom-0 h-dvh'  // Expanded: Covers entire screen (including nav)
+          : 'bottom-18 md:bottom-0 h-24' // Minimized: Lifts up 72px on mobile to show Nav, sits at 0 on desktop
         }`}
     >
       <audio
@@ -225,7 +258,7 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
                 {playbackRate}x
               </button>
 
-              <div className="w-[1px] h-6 bg-white/10"></div>
+              <div className="w-px h-6 bg-white/10"></div>
 
               <button onClick={() => { if (audioRef.current) { audioRef.current.volume = volume === 0 ? 1 : 0; setVolume(volume === 0 ? 1 : 0); } }} className="text-gray-400 hover:text-white">
                 {volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
@@ -237,10 +270,12 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
           {/* Up Next Popup */}
           {nextEpisode && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-[#181825]/90 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full flex items-center gap-3 animate-slide-up shadow-xl max-w-[90%] md:max-w-md cursor-pointer hover:bg-[#202030]" onClick={playNext}>
-              <div className="bg-[#E50914] p-1.5 rounded-full"><Music size={12} className="text-white" /></div>
+              <div className="bg-[#E50914] p-1.5 rounded-full">
+                {!checkCanPlay(nextEpisode) ? <Lock size={12} className="text-white" /> : <Music size={12} className="text-white" />}
+              </div>
               <div className="flex flex-col text-left">
                 <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Up Next</span>
-                <span className="text-sm font-bold text-white truncate max-w-[200px]">{nextEpisode.title}</span>
+                <span className="text-sm font-bold text-white truncate max-w-50">{nextEpisode.title}</span>
               </div>
               <SkipForward size={16} className="text-gray-500 ml-2" />
             </div>
@@ -248,7 +283,7 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
         </div>
 
         {/* Desktop Queue */}
-        <div className="hidden lg:block w-[400px] xl:w-[450px]">
+        <div className="hidden lg:block w-100 xl:w-112.5">
           <QueueList
             queue={queue}
             currentIndex={currentIndex}
@@ -257,6 +292,9 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
             className="h-full"
             isPlaying={isPlaying}
             isEnded={isEnded}
+            checkCanPlay={checkCanPlay}
+            onRequirePurchase={onRequirePurchase}
+            track={track}
           />
         </div>
 
@@ -274,6 +312,9 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close }) => {
               className="flex-1 border-none bg-transparent"
               isPlaying={isPlaying}
               isEnded={isEnded}
+              checkCanPlay={checkCanPlay}
+              onRequirePurchase={onRequirePurchase}
+              track={track}
             />
           </div>
         )}

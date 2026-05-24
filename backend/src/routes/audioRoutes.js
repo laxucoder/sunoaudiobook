@@ -8,6 +8,7 @@ const {
   updatePlaylist,
   deleteEpisode,
   deletePlaylist,
+  updateAudio,
 } = require("../controllers/audioController");
 const {
   protect,
@@ -19,6 +20,7 @@ const upload = require("../middleware/uploadMiddleware");
 router.get("/", getAllSongs);
 
 router.get("/stream/:audioId", optionalAuth, streamAudio);
+router.put("/episode/:id", protect, adminOnly, updateAudio);
 
 router.post(
   "/upload",
@@ -28,7 +30,7 @@ router.post(
     { name: "audioFiles", maxCount: 10 },
     { name: "thumbnail", maxCount: 1 },
   ]),
-  uploadAudio
+  uploadAudio,
 );
 
 router.post(
@@ -36,15 +38,15 @@ router.post(
   protect,
   adminOnly,
   upload.fields([{ name: "audioFiles", maxCount: 20 }]), // Only audio needed
-  addEpisodes
+  addEpisodes,
 );
 
 router.put(
   "/playlist/:id",
   protect,
   adminOnly,
-  upload.fields([{ name: "thumbnail", maxCount: 1 }]), 
-  updatePlaylist
+  upload.fields([{ name: "thumbnail", maxCount: 1 }]),
+  updateAudio,
 );
 
 router.delete("/playlist/:id", protect, adminOnly, deletePlaylist);

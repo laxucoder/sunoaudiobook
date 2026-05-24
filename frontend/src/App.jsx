@@ -132,6 +132,54 @@ const PaginatedSection = ({ title, filter, onPlay, onBuy, user }) => {
   );
 };
 
+const EditEpisodeModal = ({ isOpen, onClose, episode, onSuccess }) => {
+  const [isFree, setIsFree] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (episode) {
+      setIsFree(episode.isFree);
+    }
+  }, [episode]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.put(`/audio/episode/${episode.id}`, { isFree });
+      toast.success("Episode updated");
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error("Failed to update episode");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#181825] w-full max-w-md p-8 rounded-2xl border border-white/10">
+        <h3 className="text-xl font-bold text-white mb-6">Edit Episode</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="bg-[#121212] p-4 rounded border border-gray-700">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300 font-bold">Is Free Episode?</span>
+              <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} className="w-5 h-5 accent-red-500" />
+            </div>
+          </div>
+          <button type="submit" disabled={loading} className="w-full bg-[#E50914] py-3 rounded-xl font-bold text-white hover:bg-red-600 transition-colors">
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [myLibrary, setMyLibrary] = useState([]);
   const [libraryPage, setLibraryPage] = useState(1);
@@ -171,6 +219,9 @@ const App = () => {
 
   const [addEpisodeOpen, setAddEpisodeOpen] = useState(false);
   const [selectedPlaylistForAdd, setSelectedPlaylistForAdd] = useState(null);
+
+  const [editEpisodeOpen, setEditEpisodeOpen] = useState(false);
+  const [episodeToEdit, setEpisodeToEdit] = useState(null);
 
   const [purchaseOptionsOpen, setPurchaseOptionsOpen] = useState(false);
   const [selectedItemForPurchase, setSelectedItemForPurchase] = useState(null);
@@ -460,6 +511,11 @@ const App = () => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleEditEpisodeClick = (ep) => {
+    setEpisodeToEdit(ep);
+    setEditEpisodeOpen(true);
+  };
+
   const handleEditClick = (playlist) => {
     setEditingPlaylist(playlist); // Set data to pre-fill modal
     setManagePlaylistOpen(true);
@@ -491,10 +547,18 @@ const App = () => {
   }, []);
 
   const handlePlay = (item) => {
-    const isUnlocked =
-      item.isFree || user?.role === "ADMIN" || user?.isPremium || false;
-    setCurrentTrack(item);
-    setIsPlaying(true);
+    const isAdmin = user?.role === "ADMIN";
+    const isPremium = user?.isPremium;
+    const isOwner = user?.purchasedAudioIds?.includes(item.id) || (item.playlistId && user?.purchasedAudioIds?.includes(item.playlistId));
+    const hasFreeEpisodes = item.episodes?.some(ep => ep.isFree);
+    const canPlay = isAdmin || isPremium || isOwner || item.isFree || hasFreeEpisodes;
+
+    if (canPlay) {
+      setCurrentTrack(item);
+      setIsPlaying(true);
+    } else {
+      handleBuy(item); // Show purchase modal if locked
+    }
   };
 
   const handleBuy = (item) => {
@@ -722,8 +786,8 @@ const App = () => {
                       <td className="py-4">
                         <span
                           className={`text-xs font-bold px-2.5 py-1 rounded-full border ${p.isFree
-                              ? "bg-green-900/20 text-green-400 border-green-500/30"
-                              : "bg-amber-900/20 text-amber-400 border-amber-500/30"
+                            ? "bg-green-900/20 text-green-400 border-green-500/30"
+                            : "bg-amber-900/20 text-amber-400 border-amber-500/30"
                             }`}
                         >
                           {p.isFree ? "FREE" : `₹${p.price}`}
@@ -783,15 +847,20 @@ const App = () => {
                                       <span className="text-gray-300 text-sm font-medium">
                                         {ep.title}
                                       </span>
+                                      {ep.isFree ? (
+                                        <span className="text-[10px] text-green-400 border border-green-500 px-1 rounded ml-2">FREE</span>
+                                      ) : (
+                                        <span className="text-[10px] text-amber-400 border border-amber-500 px-1 rounded ml-2">PREMIUM</span>
+                                      )}
                                     </div>
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteEpisode(p.id, ep.id)
-                                      }
-                                      className="text-gray-600 hover:text-red-400 p-1.5 hover:bg-red-400/10 rounded transition-colors"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex gap-2">
+                                      <button onClick={() => handleEditEpisodeClick(ep)} className="text-blue-500/50 hover:text-blue-500 p-2">
+                                        <Edit size={16} />
+                                      </button>
+                                      <button onClick={() => handleDeleteEpisode(p.id, ep.id)} className="text-red-500/50 hover:text-red-500 p-2">
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -830,8 +899,8 @@ const App = () => {
                     <p className="text-gray-400 text-sm mb-2">{p.category}</p>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded border ${p.isFree
-                          ? "bg-green-900/20 text-green-400 border-green-500/30"
-                          : "bg-amber-900/20 text-amber-400 border-amber-500/30"
+                        ? "bg-green-900/20 text-green-400 border-green-500/30"
+                        : "bg-amber-900/20 text-amber-400 border-amber-500/30"
                         }`}
                     >
                       {p.isFree ? "FREE" : `₹${p.price}`}
@@ -844,8 +913,8 @@ const App = () => {
                   <button
                     onClick={() => toggleRow(p.id)}
                     className={`col-span-1 py-2 rounded-lg flex flex-col items-center justify-center text-xs gap-1 font-medium transition-colors ${expandedRows[p.id]
-                        ? "bg-white/10 text-white"
-                        : "bg-[#121212] text-gray-400"
+                      ? "bg-white/10 text-white"
+                      : "bg-[#121212] text-gray-400"
                       }`}
                   >
                     {expandedRows[p.id] ? (
@@ -900,13 +969,20 @@ const App = () => {
                               <span className="text-gray-300 text-sm truncate">
                                 {ep.title}
                               </span>
+                              {ep.isFree ? (
+                                <span className="text-[10px] text-green-400 border border-green-500 px-1 rounded ml-2">FREE</span>
+                              ) : (
+                                <span className="text-[10px] text-amber-400 border border-amber-500 px-1 rounded ml-2">PREMIUM</span>
+                              )}
                             </div>
-                            <button
-                              onClick={() => handleDeleteEpisode(p.id, ep.id)}
-                              className="text-red-500/50 hover:text-red-500 p-2"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <div className="flex gap-1">
+                              <button onClick={() => handleEditEpisodeClick(ep)} className="text-blue-500/50 hover:text-blue-500 p-2">
+                                <Edit size={16} />
+                              </button>
+                              <button onClick={() => handleDeleteEpisode(p.id, ep.id)} className="text-red-500/50 hover:text-red-500 p-2">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1307,7 +1383,7 @@ const App = () => {
             user={user}
           />
         )}
-        <div className="max-w-[1400px] mx-auto px-6 pt-12 space-y-12">
+        <div className="max-w-350 mx-auto px-6 pt-12 space-y-12">
           <PaginatedSection
             title="Popular Free"
             filter="free"
@@ -1420,6 +1496,12 @@ const App = () => {
         onUpdateUser={(updatedUser) => setUser(updatedUser)}
         price={subscriptionPrice}
       />
+      <EditEpisodeModal
+        isOpen={editEpisodeOpen}
+        onClose={() => setEditEpisodeOpen(false)}
+        episode={episodeToEdit}
+        onSuccess={fetchSongs}
+      />
 
       {/* GLOBAL AUDIO PLAYER */}
       <AudioPlayer
@@ -1430,6 +1512,8 @@ const App = () => {
           setCurrentTrack(null);
           setIsPlaying(false);
         }}
+        onRequirePurchase={handleBuy}
+        user={user}
       />
       <AddEpisodeModal
         isOpen={addEpisodeOpen}

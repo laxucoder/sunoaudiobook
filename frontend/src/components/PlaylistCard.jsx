@@ -6,7 +6,8 @@ const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
   const isPremium = user?.isPremium;
   const isOwner = user?.purchasedAudioIds?.includes(item.id);
   const isFree = item.isFree;
-  const canPlay = isAdmin || isPremium || isOwner || isFree;
+  const hasFreeEpisodes = item.episodes?.some(ep => ep.isFree);
+  const canPlay = isAdmin || isPremium || isOwner || isFree || hasFreeEpisodes;
 
   const isNew = (new Date() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24) < 7; // Less than 7 days old
 
@@ -53,13 +54,17 @@ const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
           </span>
         </div>
         <div className="mt-3 flex items-center justify-between">
-          {!canPlay ? (
-            <span className="text-[10px] font-bold text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded bg-amber-400/10">PREMIUM</span>
-          ) : item.isFree ? (
-            <span className="text-[10px] font-bold text-gray-400 border border-gray-600 px-2 py-0.5 rounded">FREE</span>
-          ) : (
-            <span className="text-[10px] font-bold text-green-400 border border-green-600 px-2 py-0.5 rounded">UNLOCKED</span>
-          )}
+          {
+            !canPlay ? (
+              <span className="text-[10px] font-bold text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded bg-amber-400/10">PREMIUM</span>
+            ) : item.isFree ? (
+              <span className="text-[10px] font-bold text-gray-400 border border-gray-600 px-2 py-0.5 rounded">FREE</span>
+            ) : isOwner || isPremium || isAdmin ? (
+              <span className="text-[10px] font-bold text-green-400 border border-green-600 px-2 py-0.5 rounded">UNLOCKED</span>
+            ) : hasFreeEpisodes ? (
+              <span className="text-[10px] font-bold text-blue-400 border border-blue-600 px-2 py-0.5 rounded bg-blue-400/10">TRIAL AVAILABLE</span>
+            ) : null
+          }
         </div>
       </div>
     </div>
@@ -67,3 +72,4 @@ const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
 };
 
 export default PlaylistCard;
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, Music, Loader2, List } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../utils/api';
@@ -6,6 +6,14 @@ import api from '../../utils/api';
 const AddEpisodeModal = ({ isOpen, onClose, playlist, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [audioFiles, setAudioFiles] = useState([]);
+  const [isFree, setIsFree] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && playlist) {
+      setIsFree(playlist.isFree || false);
+      setAudioFiles([]);
+    }
+  }, [isOpen, playlist]);
 
   if (!isOpen || !playlist) return null;
 
@@ -22,6 +30,7 @@ const AddEpisodeModal = ({ isOpen, onClose, playlist, onSuccess }) => {
     setLoading(true);
     const formData = new FormData();
     audioFiles.forEach(f => formData.append('audioFiles', f));
+    formData.append('isFree', isFree);
 
     try {
       await api.post(`/audio/playlist/${playlist.id}/add`, formData, {
@@ -31,6 +40,7 @@ const AddEpisodeModal = ({ isOpen, onClose, playlist, onSuccess }) => {
       onSuccess(); // Refresh data
       onClose();
       setAudioFiles([]);
+      setIsFree(playlist.isFree || false);
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to add episodes");
     } finally {
@@ -69,6 +79,14 @@ const AddEpisodeModal = ({ isOpen, onClose, playlist, onSuccess }) => {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="bg-[#121212] p-4 rounded-xl border border-gray-700">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300 font-bold text-sm">Is Free Episode?</span>
+              <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} className="w-5 h-5 accent-red-500 cursor-pointer" />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">If checked, anyone can play this episode for free.</p>
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-[#E50914] py-3 rounded-xl font-bold text-white hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center gap-2">

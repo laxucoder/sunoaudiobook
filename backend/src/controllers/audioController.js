@@ -93,7 +93,7 @@ exports.getAllSongs = async (req, res) => {
 
     const formattedData = rows.map((p) => {
       const sortedEpisodes = p.episodes.sort(
-        (a, b) => a.episodeNumber - b.episodeNumber
+        (a, b) => a.episodeNumber - b.episodeNumber,
       );
 
       return {
@@ -129,6 +129,21 @@ exports.getAllSongs = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch content" });
+  }
+};
+exports.updateAudio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFree } = req.body;
+    const audio = await Audio.findByPk(id);
+    if (!audio) return res.status(404).json({ error: "Audio not found" });
+    audio.isFree = isFree == true;
+    await audio.save();
+
+    res.json({ success: true, msg: "audio updated", audio });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 };
 exports.updatePlaylist = async (req, res) => {
@@ -207,8 +222,9 @@ exports.streamAudio = async (req, res) => {
         }
         return true; // If no expiry set (legacy data), allow access
       };
-      
-      if (checkAccess(audioPurchase) || checkAccess(playlistPurchase)) allowFull = true;
+
+      if (checkAccess(audioPurchase) || checkAccess(playlistPurchase))
+        allowFull = true;
     }
     const fileSize = audio.size;
     const BYTES_PER_SEC = (audio.bitrate * 1000) / 8;
@@ -285,7 +301,7 @@ exports.getAllSongs = async (req, res) => {
       orderQuery = [
         [
           literal(
-            '"playCount" / POWER((EXTRACT(EPOCH FROM age(NOW(), "createdAt")) / 3600) + 2, 1.5)'
+            '"playCount" / POWER((EXTRACT(EPOCH FROM age(NOW(), "createdAt")) / 3600) + 2, 1.5)',
           ),
           "DESC",
         ],
@@ -314,8 +330,8 @@ exports.getAllSongs = async (req, res) => {
       isFree: p.isFree,
       price: p.price,
       category: p.category,
-      playCount: p.playCount, 
-      createdAt: p.createdAt, 
+      playCount: p.playCount,
+      createdAt: p.createdAt,
       thumbnail: p.thumbnailUrl
         ? `${req.protocol}://${req.get("host")}/${p.thumbnailUrl}`
         : null,
@@ -342,17 +358,15 @@ exports.getAllSongs = async (req, res) => {
 exports.addEpisodes = async (req, res) => {
   try {
     const { playlistId } = req.params;
-
+    const { isFree } = req.body;
 
     if (!req.files || !req.files["audioFiles"]) {
       return res.status(400).json({ error: "No audio files provided" });
     }
 
-
     const playlist = await Playlist.findByPk(playlistId);
     if (!playlist) return res.status(404).json({ error: "Playlist not found" });
 
- 
     const lastEpisode = await Audio.findOne({
       where: { playlistId },
       order: [["episodeNumber", "DESC"]],
@@ -361,7 +375,6 @@ exports.addEpisodes = async (req, res) => {
 
     const audioFiles = req.files["audioFiles"];
     const createdEpisodes = [];
-
 
     for (const file of audioFiles) {
       let duration = 0;
@@ -374,19 +387,21 @@ exports.addEpisodes = async (req, res) => {
         console.error("Meta error", e);
       }
 
-
       const episode = await Audio.create({
         // Naming convention: "Series Title - Episode X"
         title: `${playlist.title} - Episode ${nextEpisodeNum}`,
         artist: playlist.artist,
         category: playlist.category,
-        isFree: playlist.isFree, 
+        isFree:
+          isFree !== undefined
+            ? isFree === "true" || isFree === true
+            : playlist.isFree,
         price: 0,
         bitrate,
         duration,
         storagePath: file.path,
         size: file.size,
-        thumbnailUrl: playlist.thumbnailUrl, 
+        thumbnailUrl: playlist.thumbnailUrl,
         playlistId: playlist.id,
         episodeNumber: nextEpisodeNum,
       });
@@ -417,10 +432,9 @@ exports.deleteEpisode = async (req, res) => {
 
     if (episode.storagePath) {
       const fullPath = path.resolve(episode.storagePath);
-      if (fs.existsSync(epPath)) {
-        // fs.unlinkSync(fullPath); // Delete actual file
+      if (fs.existsSync(fullPath)) {
         await fs.promises
-          .unlink(epPath)
+          .unlink(fullPath)
           .catch((err) => console.error("Delete error", err));
       }
     }
@@ -431,6 +445,27 @@ exports.deleteEpisode = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Delete failed" });
+  }
+};
+
+exports.updateEpisode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFree, title } = req.body;
+    const episode = await Audio.findByPk(id);
+
+    if (!episode) return res.status(404).json({ error: "Episode not found" });
+
+    if (title !== undefined) episode.title = title;
+    if (isFree !== undefined)
+      episode.isFree = isFree === "true" || isFree === true;
+
+    await episode.save();
+
+    res.json({ success: true, msg: "Episode updated successfully", episode });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Update failed" });
   }
 };
 
@@ -468,7 +503,6 @@ exports.deletePlaylist = async (req, res) => {
         }
       }
     }
-
 
     await Audio.destroy({ where: { playlistId: id } });
     await playlist.destroy();

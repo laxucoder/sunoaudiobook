@@ -1,3 +1,4 @@
+import React from "react";
 import { BookOpen, Headphones, Home, Info, Mail, Target, User, UserPen } from "lucide-react";
 
 const MobileBottomNav = ({ activePage, setPage, user, onLogin }) => {
@@ -19,7 +20,7 @@ const MobileBottomNav = ({ activePage, setPage, user, onLogin }) => {
       label: "Support",
       icon: Mail,
       action: () => setPage("support") // Or scroll to specific section
-    }, 
+    },
     {
       id: "profile",
       label: "Profile",
