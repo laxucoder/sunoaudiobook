@@ -5,9 +5,9 @@ const SystemSetting = sequelize.define(
   "SystemSetting",
   {
     key: { type: DataTypes.STRING, primaryKey: true },
-    value: { type: DataTypes.STRING, allowNull: false },
+    value: { type: DataTypes.TEXT, allowNull: false },
   },
-  { timestamps: false }
+  { timestamps: false },
 );
 
 module.exports = SystemSetting;

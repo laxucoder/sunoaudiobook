@@ -32,6 +32,43 @@ exports.updateSubscriptionPrice = async (req, res) => {
   }
 };
 
+exports.getCoinBundles = async (req, res) => {
+  try {
+    const setting = await SystemSetting.findByPk("COIN_BUNDLES");
+    if (!setting) {
+      return res.status(500).json({
+        error: "Coin bundles not configured",
+      });
+    }
+
+    let bundles;
+
+    try {
+      bundles = JSON.parse(setting.value);
+    } catch {
+      return res.status(500).json({
+        error: "Invalid bundle configuration",
+      });
+    }
+    res.json({ bundles });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateCoinBundles = async (req, res) => {
+  try {
+    const { bundles } = req.body;
+    await SystemSetting.upsert({
+      key: "COIN_BUNDLES",
+      value: JSON.stringify(bundles),
+    });
+    res.json({ msg: "Coin bundles updated successfully", bundles });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.createOrder = async (req, res) => {
   try {
     const { type, itemId } = req.body;
@@ -108,8 +145,35 @@ exports.createOrder = async (req, res) => {
 
     // BUY COINS ---
     if (type === "BUY_COINS") {
-      amount = 99; // Price for 10 Coins
-      notes.description = "Buy 10 Premium Coins";
+      const { bundleId } = req.body;
+      // Validate input type
+      if (!bundleId || !Number.isInteger(Number(bundleId))) {
+        return res.status(400).json({
+          error: "Invalid bundle ID",
+        });
+      }
+      const setting = await SystemSetting.findByPk("COIN_BUNDLES");
+      if (!setting) {
+        return res.status(500).json({
+          error: "Coin bundles not configured",
+        });
+      }
+
+      let bundles;
+
+      try {
+        bundles = JSON.parse(setting.value);
+      } catch {
+        return res.status(500).json({
+          error: "Invalid bundle configuration",
+        });
+      }
+      const bundle = bundles.find((b) => String(b.id) === String(bundleId));
+
+      if (!bundle) return res.status(404).json({ error: "Bundle not found" });
+
+      amount = bundle.price;
+      notes.description = `Buy ${bundle.coins} Premium Coins`;
     }
 
     if (!amount || amount <= 0)
@@ -211,8 +275,16 @@ exports.verifyPayment = async (req, res) => {
         expiresAt: expiryDate, // <--- SAVE EXPIRY
       });
     } else if (type === "BUY_COINS") {
-      user.coins = (user.coins || 0) + 10;
-      await user.save();
+      const { bundleId } = req.body;
+      const setting = await SystemSetting.findByPk("COIN_BUNDLES");
+      const bundles = setting
+        ? JSON.parse(setting.value)
+        : [{ id: 1, coins: 10, price: 99 }];
+      const bundle = bundles.find((b) => String(b.id) === String(bundleId));
+      if (bundle) {
+        user.coins = (user.coins || 0) + parseInt(bundle.coins);
+        await user.save();
+      }
     }
 
     res.json({ success: true, msg: "Payment Verified & Access Granted" });

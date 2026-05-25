@@ -7,12 +7,16 @@ const {
   getSubscriptionPrice,
   updateSubscriptionPrice,
   unlockWithCoin,
+  getCoinBundles,
+  updateCoinBundles,
 } = require("../controllers/paymentController");
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 router.get("/price", getSubscriptionPrice);
 
 router.put("/price", protect, adminOnly, updateSubscriptionPrice);
+router.get("/coin-bundles", getCoinBundles);
+router.put("/coin-bundles", protect, adminOnly, updateCoinBundles);
 
 router.post("/order", protect, createOrder);
 router.post("/verify", protect, verifyPayment);

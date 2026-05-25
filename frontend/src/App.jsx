@@ -182,8 +182,8 @@ const EditEpisodeModal = ({ isOpen, onClose, episode, onSuccess }) => {
   );
 };
 
-const CoinConfirmModal = ({ isOpen, onClose, item, user, onUnlock, onBuyCoins, onSubscribe }) => {
-  if (!isOpen || !item) return null;
+const CoinConfirmModal = ({ isOpen, onClose, item, user, onUnlock, onBuyCoins, onSubscribe, coinBundles }) => {
+  if (!isOpen) return null;
   const hasCoins = user?.coins > 0;
 
   return (
@@ -194,30 +194,64 @@ const CoinConfirmModal = ({ isOpen, onClose, item, user, onUnlock, onBuyCoins, o
         <div className="w-16 h-16 bg-[#E50914]/20 rounded-full flex items-center justify-center mx-auto mb-4 text-[#E50914]">
           <Coins size={32} />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Premium Content</h3>
-        <p className="text-gray-400 text-sm mb-6">"{item.title}" requires 1 Coin to unlock this file for 6 months.</p>
-        {hasCoins ? (
-          <div className="space-y-4">
-            <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
-              <p className="text-gray-300">You have <span className="font-bold text-yellow-500">{user.coins} Coins</span></p>
-              <p className="text-xs text-gray-500 mt-1">Playing this will consume 1 coin.</p>
-            </div>
-            <button onClick={() => onUnlock(item)} className="w-full bg-[#E50914] text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors">
-              Unlock for 1 Coin
-            </button>
-          </div>
+        {item ? (
+          <>
+            <h3 className="text-xl font-bold text-white mb-2">Premium Content</h3>
+            <p className="text-gray-400 text-sm mb-6">"{item.title}" requires 1 Coin to unlock this file for 6 months.</p>
+            {hasCoins ? (
+              <div className="space-y-4">
+                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
+                  <p className="text-gray-300">You have <span className="font-bold text-yellow-500">{user.coins} Coins</span></p>
+                  <p className="text-xs text-gray-500 mt-1">Playing this will consume 1 coin.</p>
+                </div>
+                <button onClick={() => onUnlock(item)} className="w-full bg-[#E50914] text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors">
+                  Unlock for 1 Coin
+                </button>
+                <button onClick={onSubscribe} className="w-full bg-transparent border border-gray-600 text-white py-3 rounded-xl font-bold hover:bg-white/5 transition-colors">
+                  View Other Purchase Options
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-[#121212] p-4 rounded-xl border border-red-500/30 text-red-400 text-sm">
+                  You don't have enough coins.
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {coinBundles?.map((bundle) => (
+                    <button key={bundle.id} onClick={() => onBuyCoins(bundle)} className="bg-yellow-500 text-black py-2 rounded-xl font-bold hover:bg-yellow-400 transition-colors flex flex-col items-center justify-center shadow-md">
+                      <span className="flex items-center gap-1 text-sm"><Coins size={14} /> {bundle.coins} Coins</span>
+                      <span className="text-xs mt-1 border-t border-black/20 pt-1 w-3/4 text-center">₹{bundle.price}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <button onClick={onSubscribe} className="w-full bg-transparent border border-gray-600 text-white py-3 rounded-xl font-bold hover:bg-white/5 transition-colors">
+                  View Other Purchase Options
+                </button>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="space-y-4">
-            <div className="bg-[#121212] p-4 rounded-xl border border-red-500/30 text-red-400 text-sm">
-              You don't have enough coins.
+          <>
+            <h3 className="text-xl font-bold text-white mb-2">Coin Balance</h3>
+            <p className="text-gray-400 text-sm mb-6">Use coins to unlock premium episodes individually.</p>
+            <div className="space-y-4">
+              <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
+                <p className="text-gray-300">You currently have <span className="font-bold text-yellow-500">{user?.coins || 0} Coins</span></p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {coinBundles?.map((bundle) => (
+                  <button key={bundle.id} onClick={() => onBuyCoins(bundle)} className="bg-yellow-500 text-black py-2 rounded-xl font-bold hover:bg-yellow-400 transition-colors flex flex-col items-center justify-center shadow-md">
+                    <span className="flex items-center gap-1 text-sm"><Coins size={14} /> {bundle.coins} Coins</span>
+                    <span className="text-xs mt-1 border-t border-black/20 pt-1 w-3/4 text-center">₹{bundle.price}</span>
+                  </button>
+                ))}
+              </div>
+              <button onClick={onSubscribe} className="w-full bg-transparent border border-gray-600 text-white py-3 rounded-xl font-bold hover:bg-white/5 transition-colors">
+                View Other Purchase Options
+              </button>
             </div>
-            <button onClick={onBuyCoins} className="w-full bg-yellow-500 text-black py-3 rounded-xl font-bold hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2">
-              <Coins size={18} /> Buy 10 Coins for ₹99
-            </button>
-            <button onClick={onSubscribe} className="w-full bg-transparent border border-gray-600 text-white py-3 rounded-xl font-bold hover:bg-white/5 transition-colors">
-              View Subscription Options
-            </button>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -234,6 +268,8 @@ const App = () => {
   const [adminPlaylists, setAdminPlaylists] = useState([]);
   const [subscriptionPrice, setSubscriptionPrice] = useState(499);
   const [newPriceInput, setNewPriceInput] = useState("");
+  const [coinBundles, setCoinBundles] = useState([]);
+  const [adminBundles, setAdminBundles] = useState([]);
   const {
     user,
     logout,
@@ -371,17 +407,20 @@ const App = () => {
     setSelectedItemForPurchase(null);
     setPurchaseOptionsOpen(true);
   };
+
   useEffect(() => {
-    const fetchPrice = async () => {
+    const fetchConfig = async () => {
       try {
-        const res = await api.get("/payment/price");
-        setSubscriptionPrice(res.data.price);
-        setNewPriceInput(res.data.price);
+        const [priceRes, bundlesRes] = await Promise.all([api.get("/payment/price"), api.get("/payment/coin-bundles")]);
+        setSubscriptionPrice(priceRes.data.price);
+        setNewPriceInput(priceRes.data.price);
+        setCoinBundles(bundlesRes.data.bundles || []);
+        setAdminBundles(bundlesRes.data.bundles || []);
       } catch (e) {
-        console.error("Price fetch failed", e);
+        console.error("Config fetch failed", e);
       }
     };
-    fetchPrice();
+    fetchConfig();
   }, []);
 
   const handleUpdatePrice = async () => {
@@ -391,6 +430,16 @@ const App = () => {
       toast.success("Subscription Price Updated!");
     } catch (err) {
       toast.error("Failed to update price");
+    }
+  };
+
+  const handleUpdateBundles = async () => {
+    try {
+      await api.put("/payment/coin-bundles", { bundles: adminBundles });
+      setCoinBundles(adminBundles);
+      toast.success("Coin bundles updated!");
+    } catch (err) {
+      toast.error("Failed to update bundles");
     }
   };
 
@@ -441,12 +490,12 @@ const App = () => {
     }
   };
 
-  const executeBuyCoins = async () => {
+  const executeBuyCoins = async (bundle) => {
     setCoinModalOpen(false);
     const isLoaded = await loadRazorpay();
     if (!isLoaded) return toast.error("Razorpay SDK failed to load. Check your internet.");
     try {
-      const orderRes = await api.post("/payment/order", { type: "BUY_COINS" });
+      const orderRes = await api.post("/payment/order", { type: "BUY_COINS", bundleId: bundle.id });
       const { id: order_id, amount, currency } = orderRes.data;
 
       const options = {
@@ -454,7 +503,7 @@ const App = () => {
         amount,
         currency,
         name: "Suno Audiobook",
-        description: "Buy 10 Coins",
+        description: `Buy ${bundle.coins} Coins`,
         order_id,
         prefill: { name: user.name, email: user.email },
         handler: async function (response) {
@@ -464,6 +513,7 @@ const App = () => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               type: "BUY_COINS",
+              bundleId: bundle.id
             });
             toast.success("Coins purchased successfully!");
             window.location.reload();
@@ -814,7 +864,7 @@ const App = () => {
 
       return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-6 w-full">
             <div>
               <h2 className="text-3xl font-black text-[#E50914] flex items-center gap-2">
                 <LayoutDashboard /> Dashboard
@@ -823,27 +873,50 @@ const App = () => {
                 Manage your stories, episodes, and users.
               </p>
             </div>
-            <div className="bg-[#181825] border border-white/10 rounded-xl p-4 flex items-center gap-4 shadow-lg">
-              <div className="bg-[#E50914]/20 p-2 rounded-lg text-[#E50914]">
-                <SettingsIcon size={20} />
+
+            <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
+              <div className="bg-[#181825] border border-white/10 rounded-xl p-4 flex items-center gap-4 shadow-lg h-fit">
+                <div className="bg-[#E50914]/20 p-2 rounded-lg text-[#E50914]">
+                  <SettingsIcon size={20} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 font-bold uppercase block">
+                    Monthly Price (₹)
+                  </label>
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      type="number"
+                      className="w-20 bg-[#121212] border border-gray-700 rounded px-2 py-1 text-white text-sm focus:border-[#E50914] outline-none"
+                      value={newPriceInput}
+                      onChange={(e) => setNewPriceInput(e.target.value)}
+                    />
+                    <button
+                      onClick={handleUpdatePrice}
+                      className="bg-white text-black px-3 py-1 rounded text-xs font-bold hover:bg-gray-200 transition-colors"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-gray-400 font-bold uppercase block">
-                  Monthly Price (₹)
-                </label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    type="number"
-                    className="w-20 bg-[#121212] border border-gray-700 rounded px-2 py-1 text-white text-sm focus:border-[#E50914] outline-none"
-                    value={newPriceInput}
-                    onChange={(e) => setNewPriceInput(e.target.value)}
-                  />
-                  <button
-                    onClick={handleUpdatePrice}
-                    className="bg-white text-black px-3 py-1 rounded text-xs font-bold hover:bg-gray-200 transition-colors"
-                  >
-                    Save
-                  </button>
+
+              <div className="bg-[#181825] border border-white/10 rounded-xl p-4 flex flex-col gap-3 shadow-lg flex-1 md:min-w-[280px]">
+                <div className="flex items-center gap-2 text-[#E50914]">
+                  <Coins size={20} /> <span className="font-bold text-white text-sm uppercase">Coin Bundles</span>
+                </div>
+                <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                  {adminBundles.map((bundle, idx) => (
+                    <div key={bundle.id} className="flex gap-2 items-center">
+                      <input type="number" value={bundle.coins} onChange={(e) => { const newB = [...adminBundles]; newB[idx].coins = e.target.value; setAdminBundles(newB); }} className="w-16 bg-[#121212] border border-gray-700 rounded px-2 py-1 text-white text-sm" placeholder="Coins" />
+                      <span className="text-gray-400 text-xs">Coins = ₹</span>
+                      <input type="number" value={bundle.price} onChange={(e) => { const newB = [...adminBundles]; newB[idx].price = e.target.value; setAdminBundles(newB); }} className="w-16 bg-[#121212] border border-gray-700 rounded px-2 py-1 text-white text-sm" placeholder="Price" />
+                      <button onClick={() => setAdminBundles(adminBundles.filter((_, i) => i !== idx))} className="text-red-500 hover:text-red-400 p-1"><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center mt-1 border-t border-white/5 pt-2">
+                  <button onClick={() => setAdminBundles([...adminBundles, { id: Date.now(), coins: 10, price: 99 }])} className="text-xs text-blue-400 hover:underline flex items-center gap-1"><Plus size={12} /> Add</button>
+                  <button onClick={handleUpdateBundles} className="bg-white text-black px-3 py-1 rounded text-xs font-bold hover:bg-gray-200 transition-colors">Save Bundles</button>
                 </div>
               </div>
             </div>
@@ -852,7 +925,7 @@ const App = () => {
                 setEditingPlaylist(null);
                 setManagePlaylistOpen(true);
               }}
-              className="w-full md:w-auto bg-[#E50914] text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-red-600 flex items-center justify-center gap-2 transition-transform active:scale-95"
+              className="w-full lg:w-auto bg-[#E50914] text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-red-600 flex items-center justify-center gap-2 transition-transform active:scale-95 shrink-0"
             >
               <Plus size={20} /> Upload Series
             </button>
@@ -1556,6 +1629,20 @@ const App = () => {
         onSearchChange={setSearchQuery}
       />
 
+      {/* FLOATING COIN WIDGET */}
+      {user && page === "home" && user.role === "USER" && (
+        <div
+          onClick={() => { setSelectedItemForPurchase(null); setCoinModalOpen(true); }}
+          className="fixed bottom-44 right-4 md:top-24 md:bottom-auto md:right-8 z-[80] flex items-center gap-2 bg-gradient-to-r from-yellow-600/20 to-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.2)] backdrop-blur-md cursor-pointer hover:bg-yellow-500/20 transition-all hover:scale-105"
+        >
+          <Coins size={20} />
+          <span className="font-bold">{user.coins || 0} Coins</span>
+          <div className="bg-yellow-500 text-black rounded-full p-0.5 ml-1">
+            <Plus size={12} strokeWidth={4} />
+          </div>
+        </div>
+      )}
+
       <main className="animate-fade-in">{renderContent()}</main>
 
       <footer className="bg-black py-10 border-t border-gray-900 text-center text-gray-500 text-sm">
@@ -1651,6 +1738,7 @@ const App = () => {
         onUnlock={executeUnlockWithCoin}
         onBuyCoins={executeBuyCoins}
         onSubscribe={() => { setCoinModalOpen(false); setPurchaseOptionsOpen(true); }}
+        coinBundles={coinBundles}
       />
     </div>
   );
