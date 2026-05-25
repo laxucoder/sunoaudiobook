@@ -4,10 +4,11 @@ import { Play, Lock, CheckCircle, Zap } from 'lucide-react';
 const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
   const isAdmin = user?.role === 'ADMIN';
   const isPremium = user?.isPremium;
-  const isOwner = user?.purchasedAudioIds?.includes(item.id);
+  const isOwner = user?.purchasedAudioIds?.some(id => String(id) === String(item.id));
   const isFree = item.isFree;
   const hasFreeEpisodes = item.episodes?.some(ep => ep.isFree);
-  const canPlay = isAdmin || isPremium || isOwner || isFree || hasFreeEpisodes;
+  const ownsAnyEpisode = item.episodes?.some(ep => user?.purchasedAudioIds?.some(id => String(id) === String(ep.id)));
+  const canPlay = isAdmin || isPremium || isOwner || isFree || hasFreeEpisodes || ownsAnyEpisode;
 
   const isNew = (new Date() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24) < 7; // Less than 7 days old
 
@@ -40,7 +41,7 @@ const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
         {!canPlay && (
           <div className="absolute top-2 right-2 bg-black/80 p-1.5 rounded-full text-amber-400 backdrop-blur-md border border-amber-500/30"><Lock size={14} /></div>
         )}
-        {isOwner && !user?.isPremium && (
+        {(isOwner || ownsAnyEpisode) && !user?.isPremium && (
           <div className="absolute top-2 right-2 bg-green-900/90 p-1.5 rounded-full text-green-400 backdrop-blur-md border border-green-500/30"><CheckCircle size={14} /></div>
         )}
       </div>
@@ -61,6 +62,8 @@ const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
               <span className="text-[10px] font-bold text-gray-400 border border-gray-600 px-2 py-0.5 rounded">FREE</span>
             ) : isOwner || isPremium || isAdmin ? (
               <span className="text-[10px] font-bold text-green-400 border border-green-600 px-2 py-0.5 rounded">UNLOCKED</span>
+            ) : ownsAnyEpisode ? (
+              <span className="text-[10px] font-bold text-indigo-300 border border-indigo-300 px-2 py-0.5 rounded">COIN</span>
             ) : hasFreeEpisodes ? (
               <span className="text-[10px] font-bold text-blue-400 border border-blue-600 px-2 py-0.5 rounded bg-blue-400/10">TRIAL AVAILABLE</span>
             ) : null
@@ -72,4 +75,3 @@ const PlaylistCard = ({ item, onPlay, user, onBuy }) => {
 };
 
 export default PlaylistCard;
-

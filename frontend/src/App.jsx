@@ -18,6 +18,8 @@ import {
   TwitterIcon,
   Send,
   InstagramIcon,
+  Coins,
+  X,
 } from "lucide-react";
 import AddEpisodeModal from "./components/modals/AddEpisodeModal";
 
@@ -180,6 +182,48 @@ const EditEpisodeModal = ({ isOpen, onClose, episode, onSuccess }) => {
   );
 };
 
+const CoinConfirmModal = ({ isOpen, onClose, item, user, onUnlock, onBuyCoins, onSubscribe }) => {
+  if (!isOpen || !item) return null;
+  const hasCoins = user?.coins > 0;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#181825] w-full max-w-md p-8 rounded-2xl border border-white/10 text-center">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
+        <div className="w-16 h-16 bg-[#E50914]/20 rounded-full flex items-center justify-center mx-auto mb-4 text-[#E50914]">
+          <Coins size={32} />
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">Premium Content</h3>
+        <p className="text-gray-400 text-sm mb-6">"{item.title}" requires 1 Coin to unlock this file for 6 months.</p>
+        {hasCoins ? (
+          <div className="space-y-4">
+            <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
+              <p className="text-gray-300">You have <span className="font-bold text-yellow-500">{user.coins} Coins</span></p>
+              <p className="text-xs text-gray-500 mt-1">Playing this will consume 1 coin.</p>
+            </div>
+            <button onClick={() => onUnlock(item)} className="w-full bg-[#E50914] text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors">
+              Unlock for 1 Coin
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-[#121212] p-4 rounded-xl border border-red-500/30 text-red-400 text-sm">
+              You don't have enough coins.
+            </div>
+            <button onClick={onBuyCoins} className="w-full bg-yellow-500 text-black py-3 rounded-xl font-bold hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2">
+              <Coins size={18} /> Buy 10 Coins for ₹99
+            </button>
+            <button onClick={onSubscribe} className="w-full bg-transparent border border-gray-600 text-white py-3 rounded-xl font-bold hover:bg-white/5 transition-colors">
+              View Subscription Options
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [myLibrary, setMyLibrary] = useState([]);
   const [libraryPage, setLibraryPage] = useState(1);
@@ -225,6 +269,7 @@ const App = () => {
 
   const [purchaseOptionsOpen, setPurchaseOptionsOpen] = useState(false);
   const [selectedItemForPurchase, setSelectedItemForPurchase] = useState(null);
+  const [coinModalOpen, setCoinModalOpen] = useState(false);
 
   const fetchLibrary = async (pageNum, isLoadMore = false) => {
     if (!user) return;
@@ -395,6 +440,56 @@ const App = () => {
       );
     }
   };
+
+  const executeBuyCoins = async () => {
+    setCoinModalOpen(false);
+    const isLoaded = await loadRazorpay();
+    if (!isLoaded) return toast.error("Razorpay SDK failed to load. Check your internet.");
+    try {
+      const orderRes = await api.post("/payment/order", { type: "BUY_COINS" });
+      const { id: order_id, amount, currency } = orderRes.data;
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount,
+        currency,
+        name: "Suno Audiobook",
+        description: "Buy 10 Coins",
+        order_id,
+        prefill: { name: user.name, email: user.email },
+        handler: async function (response) {
+          try {
+            await api.post("/payment/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              type: "BUY_COINS",
+            });
+            toast.success("Coins purchased successfully!");
+            window.location.reload();
+          } catch (e) {
+            toast.error("Verification Failed");
+          }
+        },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      toast.error("Coin purchase failed: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const executeUnlockWithCoin = async (item) => {
+    try {
+      await api.post("/payment/unlock-with-coin", { itemId: item.id });
+      toast.success("Unlocked successfully!");
+      setCoinModalOpen(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Unlock failed");
+    }
+  };
+
   const handleUpgradeSubscription = async () => {
     if (!user) {
       setLoginOpen(true);
@@ -549,12 +644,28 @@ const App = () => {
   const handlePlay = (item) => {
     const isAdmin = user?.role === "ADMIN";
     const isPremium = user?.isPremium;
-    const isOwner = user?.purchasedAudioIds?.includes(item.id) || (item.playlistId && user?.purchasedAudioIds?.includes(item.playlistId));
+    const isOwner = user?.purchasedAudioIds?.some(id => String(id) === String(item.id)) || (item.playlistId && user?.purchasedAudioIds?.some(id => String(id) === String(item.playlistId)));
     const hasFreeEpisodes = item.episodes?.some(ep => ep.isFree);
-    const canPlay = isAdmin || isPremium || isOwner || item.isFree || hasFreeEpisodes;
+    const ownsAnyEpisode = item.episodes?.some(ep => user?.purchasedAudioIds?.some(id => String(id) === String(ep.id)));
+    const canPlay = isAdmin || isPremium || isOwner || item.isFree || hasFreeEpisodes || ownsAnyEpisode;
 
     if (canPlay) {
-      setCurrentTrack(item);
+      // Spoof playlist wrapper as free to bypass AudioPlayer's playlist-level lock,
+      // ensuring it relies on individual episode locks instead.
+      const trackToPlay = { ...item };
+
+      if (isOwner) trackToPlay.isFree = true;
+
+      if (item.episodes) {
+        trackToPlay.isFree = true;
+        const ownsEntirePlaylist = user?.purchasedAudioIds?.some(id => String(id) === String(item.id));
+        trackToPlay.episodes = item.episodes.map(ep => {
+          const ownsThisEpisode = ownsEntirePlaylist || user?.purchasedAudioIds?.some(id => String(id) === String(ep.id));
+          return ownsThisEpisode ? { ...ep, isFree: true } : ep;
+        });
+      }
+
+      setCurrentTrack(trackToPlay);
       setIsPlaying(true);
     } else {
       handleBuy(item); // Show purchase modal if locked
@@ -567,7 +678,7 @@ const App = () => {
       return;
     }
     setSelectedItemForPurchase(item);
-    setPurchaseOptionsOpen(true);
+    setCoinModalOpen(true);
   };
   const handleLogoutConfirm = () => {
     logout();
@@ -1037,7 +1148,10 @@ const App = () => {
                 <h3 className="text-2xl font-bold text-white mb-1">
                   {user.name}
                 </h3>
-                <p className="text-gray-400 mb-6 text-sm">{user.email}</p>
+                <p className="text-gray-400 mb-2 text-sm">{user.email}</p>
+                <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 px-4 py-2 rounded-full mb-6 text-sm font-bold">
+                  <Coins size={16} /> {user.coins || 0} Coins
+                </div>
 
                 <button
                   onClick={() => setEditProfileOpen(true)}
@@ -1528,6 +1642,15 @@ const App = () => {
         onBuySingle={executeSinglePurchase}
         onSubscribe={executeSubscribe}
         subscriptionPrice={subscriptionPrice}
+      />
+      <CoinConfirmModal
+        isOpen={coinModalOpen}
+        onClose={() => setCoinModalOpen(false)}
+        item={selectedItemForPurchase}
+        user={user}
+        onUnlock={executeUnlockWithCoin}
+        onBuyCoins={executeBuyCoins}
+        onSubscribe={() => { setCoinModalOpen(false); setPurchaseOptionsOpen(true); }}
       />
     </div>
   );

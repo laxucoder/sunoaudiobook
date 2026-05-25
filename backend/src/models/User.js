@@ -26,7 +26,11 @@ const User = sequelize.define(
       type: DataTypes.ENUM("USER", "ADMIN"),
       defaultValue: "USER",
     },
-
+    coins: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
     isVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -35,7 +39,6 @@ const User = sequelize.define(
     profilePic: { type: DataTypes.STRING, allowNull: true },
     otpCode: DataTypes.STRING,
     otpExpires: DataTypes.DATE,
-
 
     isPremium: {
       type: DataTypes.BOOLEAN,
@@ -51,7 +54,7 @@ const User = sequelize.define(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = User;

@@ -21,9 +21,11 @@ const HeroCarousel = ({ items, onPlay, onBuy, user }) => {
       {items.map((item, index) => {
         const isAdmin = user?.role === 'ADMIN';
         const isPremium = user?.isPremium;
-        const isOwner = user?.purchasedAudioIds?.includes(item.id);
+        const isOwner = user?.purchasedAudioIds?.some(id => String(id) === String(item.id));
         const isFree = item.isFree;
-        const canPlay = isAdmin || isPremium || isOwner || isFree;
+        const hasFreeEpisodes = item.episodes?.some(ep => ep.isFree);
+        const ownsAnyEpisode = item.episodes?.some(ep => user?.purchasedAudioIds?.some(id => String(id) === String(ep.id)));
+        const canPlay = isAdmin || isPremium || isOwner || isFree || hasFreeEpisodes || ownsAnyEpisode;
 
         return (
           <div
@@ -50,8 +52,8 @@ const HeroCarousel = ({ items, onPlay, onBuy, user }) => {
                 <button
                   onClick={() => canPlay ? onPlay(item) : onBuy(item)}
                   className={`px-8 py-3 rounded-full font-bold flex items-center gap-2 transition-transform transform active:scale-95 shadow-xl ${canPlay
-                      ? 'bg-white text-black hover:bg-gray-200'
-                      : 'bg-[#E50914] text-white hover:bg-red-600'
+                    ? 'bg-white text-black hover:bg-gray-200'
+                    : 'bg-[#E50914] text-white hover:bg-red-600'
                     }`}
                 >
                   {canPlay ? (

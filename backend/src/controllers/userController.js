@@ -26,7 +26,8 @@ exports.getProfile = async (req, res) => {
     });
     const purchasedIds = purchases
       .map((p) => p.playlistId || p.audioId)
-      .filter((id) => id !== null);
+      .filter((id) => id !== null)
+      .map((id) => String(id));
     const userData = user.toJSON();
     if (userData.profilePic && !userData.profilePic.startsWith("http")) {
       user.profilePic = `${req.protocol}://${req.get("host")}/${
@@ -39,11 +40,12 @@ exports.getProfile = async (req, res) => {
 
     res.json({
       ...user.toJSON(),
+      coins: user.coins || 0,
       purchasedAudioIds: purchasedIds,
       subscriptionStatus: isSubscriptionActive ? "Active" : "Expired",
       daysLeft: isSubscriptionActive
         ? Math.ceil(
-            (user.subscriptionEndDate - new Date()) / (1000 * 60 * 60 * 24)
+            (user.subscriptionEndDate - new Date()) / (1000 * 60 * 60 * 24),
           )
         : 0,
     });
@@ -163,7 +165,7 @@ exports.getMyLibrary = async (req, res) => {
         if (p.Playlist) {
           const episodes =
             p.Playlist.episodes?.sort(
-              (a, b) => a.episodeNumber - b.episodeNumber
+              (a, b) => a.episodeNumber - b.episodeNumber,
             ) || [];
           const firstEp = episodes[0];
 
@@ -192,7 +194,7 @@ exports.getMyLibrary = async (req, res) => {
                   ? `${req.protocol}://${req.get("host")}/${ep.thumbnailUrl}`
                   : null,
                 streamUrl: `${req.protocol}://${req.get(
-                  "host"
+                  "host",
                 )}/api/audio/stream/${ep.id}`,
               })),
               streamUrl: firstEp
@@ -216,7 +218,7 @@ exports.getMyLibrary = async (req, res) => {
                 ? `${req.protocol}://${req.get("host")}/${p.Audio.thumbnailUrl}`
                 : null,
               streamUrl: `${req.protocol}://${req.get(
-                "host"
+                "host",
               )}/api/audio/stream/${p.Audio.id}`,
             },
           };
