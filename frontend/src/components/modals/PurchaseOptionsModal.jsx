@@ -8,12 +8,12 @@ const PurchaseOptionsModal = ({ isOpen, onClose, item, onBuySingle, onSubscribe,
   return (
     <div className="fixed inset-0 z-120 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#181825] w-full max-w-3xl p-6 rounded-2xl border border-white/10 animate-scale-in shadow-2xl">
+      <div className={`relative bg-[#181825] ${item ? 'max-w-3xl' : 'max-w-md'} p-6 rounded-2xl border border-white/10 animate-scale-in shadow-2xl w-full`}>
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
 
         <h3 className="text-xl font-black text-white mb-1 text-center">Unlock Content</h3>
         <p className="text-gray-400 text-sm text-center mb-6">Choose the plan that suits you best</p>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className={`grid ${item ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`} >
           {item && (
             <div className="bg-[#121212] border border-gray-700 rounded-xl p-4 flex flex-col hover:border-[#E50914] transition-colors group relative overflow-hidden">
 
