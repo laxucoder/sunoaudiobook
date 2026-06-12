@@ -19,7 +19,7 @@ If you are developing a production application, we recommend using TypeScript wi
 ## How to Run the Project
 
 1️⃣ Run Backend 
-bash.
+[`bash`]
 
 cd backend
 npm install
@@ -28,7 +28,7 @@ npm start
 2️⃣ Open a New Terminal
 
 Run Frontend:
-bash..
+[`bash`]
 
 cd frontend
 npm install
