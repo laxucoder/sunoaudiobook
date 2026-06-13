@@ -47,11 +47,11 @@ const Purchase = sequelize.define("Purchase", {
   },
   type: {
     type: DataTypes.STRING,
-    defaultValue: "RENTAL", // Changed from LIFETIME
+    defaultValue: "RENTAL",
   },
   expiresAt: {
     type: DataTypes.DATE,
-    allowNull: true, // Null means lifetime (if you ever need it back)
+    allowNull: true, // Null means lifetime
   },
 });
 

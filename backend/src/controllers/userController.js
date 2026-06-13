@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const fs = require("fs"); // Make sure fs is imported for profile pic deletion
+const fs = require("fs");
 const { User, Purchase, Audio, Playlist } = require("../models");
 const { Op } = require("sequelize");
 
@@ -16,11 +16,7 @@ exports.getProfile = async (req, res) => {
     const purchases = await Purchase.findAll({
       where: {
         userId: user.id,
-        // Only get purchases that have NOT expired
-        [Op.or]: [
-          { expiresAt: { [Op.gt]: new Date() } }, // Expires in future
-          { expiresAt: null }, // Or has no expiry (lifetime)
-        ],
+        [Op.or]: [{ expiresAt: { [Op.gt]: new Date() } }, { expiresAt: null }],
       },
       attributes: ["audioId", "playlistId"],
     });
@@ -124,11 +120,7 @@ exports.getMyLibrary = async (req, res) => {
     const { count, rows } = await Purchase.findAndCountAll({
       where: {
         userId: req.user.id,
-        // Only get purchases that have NOT expired
-        [Op.or]: [
-          { expiresAt: { [Op.gt]: new Date() } }, // Expires in future
-          { expiresAt: null }, // Or has no expiry (lifetime)
-        ],
+        [Op.or]: [{ expiresAt: { [Op.gt]: new Date() } }, { expiresAt: null }],
       },
       include: [
         {

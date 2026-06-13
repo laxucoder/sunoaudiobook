@@ -100,7 +100,6 @@ const Navbar = ({ activePage, navigate, user, onLoginClick, onLogout, onSearchCh
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-3 bg-[#181825] py-1.5 px-4 rounded-full border border-white/10">
-                {/* Avatar */}
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 flex items-center justify-center text-white font-bold select-none relative">
                   {user.profilePic ? (
                     <img

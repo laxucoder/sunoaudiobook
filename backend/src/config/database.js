@@ -1,9 +1,8 @@
 const { Sequelize } = require("sequelize");
 
-// Initialize Sequelize with NeonDB URL
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: "postgres",
-  logging: false, // Set to console.log to see raw SQL queries
+  logging: true, // Set to console.log to see raw SQL queries
   dialectOptions: {
     ssl: {
       require: true,

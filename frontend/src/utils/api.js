@@ -1,4 +1,3 @@
-// src/utils/api.js
 import axios from "axios";
 
 const api = axios.create({
@@ -21,7 +20,7 @@ api.interceptors.response.use(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/refresh`,
           {
             withCredentials: true,
-          }
+          },
         );
 
         const newToken = res.data.accessToken;
@@ -35,7 +34,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

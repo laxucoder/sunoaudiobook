@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { User, Mail, Lock, X, ArrowLeft, KeyRound, CheckCircle, Eye, EyeOff } from 'lucide-react';
-import { AuthContext } from '../../context/AuthContext.jsx'; // Import Context
-import api from '../../utils/api.js'; // Import your Axios instance
+import { AuthContext } from '../../context/AuthContext.jsx';
+import api from '../../utils/api.js';
 import { toast } from 'react-hot-toast';
 
 const LoginModal = ({ isOpen, onClose }) => {
-  const { login } = useContext(AuthContext); // Use global login function
+  const { login } = useContext(AuthContext);
 
   const [view, setView] = useState('login'); // 'login', 'signup', 'forgot', 'otp'
   const [formData, setFormData] = useState({ name: '', email: '', password: '', otp: '' });
@@ -39,7 +39,7 @@ const LoginModal = ({ isOpen, onClose }) => {
       setIsLoading(false);
       setSuccessMsg(`OTP sent to ${formData.email}`);
       setView('otp');
-      toast.success(`OTP sent to ${formData.email}`); // Success Toast
+      toast.success(`OTP sent to ${formData.email}`);
     } catch (err) {
       setIsLoading(false);
       const msg = err.response?.data?.msg || 'Registration failed'
@@ -262,7 +262,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                 placeholder="6-digit Code"
                 maxLength="6"
                 className="w-full bg-[#1e1e2d] border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white focus:border-[#E50914] outline-none tracking-widest font-mono text-lg"
-                value={formData.otp} // Reusing the same OTP state
+                value={formData.otp}
                 onChange={e => setFormData({ ...formData, otp: e.target.value })}
                 required
               />

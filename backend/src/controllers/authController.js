@@ -7,18 +7,16 @@ const {
   getPasswordResetTemplate,
 } = require("../utils/emailTemplates");
 
-// Helper to generate Access Token (Short Lived: 15 mins)
 const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_ACCESS_SECRET,
     {
       expiresIn: "15m",
-    }
+    },
   );
 };
 
-// Helper to generate Refresh Token (Long Lived: 7 days)
 const generateRefreshToken = (user) => {
   return jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: "7d",
@@ -46,7 +44,7 @@ exports.register = async (req, res) => {
 
     try {
       await resend.emails.send({
-        from: `${process.env.HOSTNAME_EMAIL}`, // Ensure this is valid in your Resend dashboard
+        from: `${process.env.HOSTNAME_EMAIL}`,
         to: email,
         subject: "StoryHaven - Verify Your Email",
         html: getOtpTemplate(otpCode, name),
@@ -157,7 +155,6 @@ exports.refresh = async (req, res) => {
       async (err, decoded) => {
         if (err || user.id !== decoded.id) return res.sendStatus(403);
 
-        // 2. Generate NEW Access Token
         const newAccessToken = generateAccessToken(user);
 
         const newRefreshToken = generateRefreshToken(user);
@@ -168,7 +165,7 @@ exports.refresh = async (req, res) => {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          maxAge: 15 * 60 * 1000, // 15 Mins (Match your token expiry)
+          maxAge: 15 * 60 * 1000,
         });
 
         res.cookie("jwt", newRefreshToken, {
@@ -179,7 +176,7 @@ exports.refresh = async (req, res) => {
         });
 
         res.json({ accessToken: newAccessToken });
-      }
+      },
     );
   } catch (err) {
     console.error(err);
@@ -189,7 +186,7 @@ exports.refresh = async (req, res) => {
 
 exports.logout = async (req, res) => {
   const cookies = req.cookies;
-  if (!cookies?.jwt) return res.sendStatus(204); // No content
+  if (!cookies?.jwt) return res.sendStatus(204);
 
   const refreshToken = cookies.jwt;
   const user = await User.findOne({ where: { refreshToken } });

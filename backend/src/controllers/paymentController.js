@@ -76,14 +76,12 @@ exports.createOrder = async (req, res) => {
     const user = await User.findByPk(req.user.id);
     let amount = 0;
 
-    // Notes for Razorpay Dashboard
     let notes = {
       userId: user.id,
       userName: user.name,
       type: type,
     };
 
-    // RECURRING SUBSCRIPTION ---
     if (type === "SUBSCRIPTION_RECURRING") {
       const subPrice = await fetchSubscriptionPrice();
 
@@ -113,13 +111,11 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    // ONE-TIME SUBSCRIPTION (1 Month) ---
     if (type === "SUBSCRIPTION_ONE_TIME") {
       amount = await fetchSubscriptionPrice();
       notes.description = "1 Month Premium Access";
     }
 
-    // CONTENT PURCHASE  ---
     if (type === "CONTENT_PURCHASE") {
       if (!itemId) return res.status(400).json({ error: "Item ID required" });
 
@@ -143,10 +139,8 @@ exports.createOrder = async (req, res) => {
       notes.description = `Lifetime Purchase: ${playlist.title}`;
     }
 
-    // BUY COINS ---
     if (type === "BUY_COINS") {
       const { bundleId } = req.body;
-      // Validate input type
       if (!bundleId || !Number.isInteger(Number(bundleId))) {
         return res.status(400).json({
           error: "Invalid bundle ID",
@@ -193,7 +187,6 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-// 2. VERIFY PAYMENT (Handles All 3 Types)
 exports.verifyPayment = async (req, res) => {
   try {
     const {
@@ -207,16 +200,13 @@ exports.verifyPayment = async (req, res) => {
 
     let generated_signature;
 
-    // --- VERIFICATION LOGIC ---
     if (razorpay_subscription_id) {
-      // Recurring Subscription Verification
       const data = razorpay_payment_id + "|" + razorpay_subscription_id;
       generated_signature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(data)
         .digest("hex");
     } else {
-      // One-Time Payment Verification
       const data = razorpay_order_id + "|" + razorpay_payment_id;
       generated_signature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -228,7 +218,6 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({ msg: "Invalid Signature" });
     }
 
-    // --- FULFILLMENT LOGIC ---
     const user = await User.findByPk(req.user.id);
 
     if (type === "SUBSCRIPTION_RECURRING") {
@@ -252,7 +241,6 @@ exports.verifyPayment = async (req, res) => {
         user.subscriptionEndDate = nextMonth;
       }
       user.isPremium = true;
-      // Do NOT enable auto-renewal for one-time payments
       if (!user.isAutoRenewal) user.isAutoRenewal = false;
       await user.save();
     } else if (type === "CONTENT_PURCHASE") {
@@ -261,7 +249,6 @@ exports.verifyPayment = async (req, res) => {
       if (!item) item = await Audio.findByPk(itemId);
       if (item) amount = item.price;
 
-      // --- CALCULATE EXPIRY (6 Months) ---
       const expiryDate = new Date();
       expiryDate.setMonth(expiryDate.getMonth() + 6);
 
@@ -272,7 +259,7 @@ exports.verifyPayment = async (req, res) => {
         amount: amount,
         paymentId: razorpay_payment_id,
         type: "RENTAL",
-        expiresAt: expiryDate, // <--- SAVE EXPIRY
+        expiresAt: expiryDate,
       });
     } else if (type === "BUY_COINS") {
       const { bundleId } = req.body;
@@ -321,7 +308,6 @@ exports.unlockWithCoin = async (req, res) => {
           .map((p) => p.audioId)
           .filter((id) => id !== null);
 
-        // Find the first locked episode that the user doesn't already own
         const firstLocked = sortedEpisodes.find(
           (ep) =>
             !ep.isFree &&
@@ -337,7 +323,7 @@ exports.unlockWithCoin = async (req, res) => {
     await user.save();
 
     const expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() + 6); // 6 Months access
+    expiryDate.setMonth(expiryDate.getMonth() + 6);
 
     await Purchase.create({
       userId: user.id,
@@ -366,10 +352,8 @@ exports.cancelSubscription = async (req, res) => {
         .json({ msg: "No active auto-debit subscription found." });
     }
 
-    // Cancel at Razorpay
     await razorpay.subscriptions.cancel(user.razorpaySubscriptionId);
 
-    // Update DB
     user.isAutoRenewal = false;
     user.razorpaySubscriptionId = null;
     await user.save();

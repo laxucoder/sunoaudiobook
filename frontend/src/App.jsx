@@ -37,7 +37,7 @@ import ManagePlaylistModal from "./components/modals/ManagePlaylistModal";
 import EditProfileModal from "./components/modals/EditProfileModal";
 import SubscriptionModal from "./components/modals/SubscriptionModal";
 import LogoutModal from "./components/modals/LogoutModal";
-import PurchaseOptionsModal from "./components/modals/PurchaseOptionsModal"; // IMPORT THIS
+import PurchaseOptionsModal from "./components/modals/PurchaseOptionsModal";
 
 import { loadRazorpay } from "./utils/loadRazorpay";
 import MobileBottomNav from "./components/MobileBottomNav";
@@ -94,7 +94,7 @@ const PaginatedSection = ({ title, filter, onPlay, onBuy, user }) => {
         <Loader className="animate-spin text-[#E50914]" />
       </div>
     );
-  if (items.length === 0) return null; // Don't show empty sections
+  if (items.length === 0) return null;
 
   return (
     <section>
@@ -333,7 +333,7 @@ const App = () => {
 
   useEffect(() => {
     if (page === "profile" && user) {
-      setLibraryPage(1); // Reset page
+      setLibraryPage(1);
       fetchLibrary(1, false);
     }
   }, [page, user]);
@@ -344,7 +344,6 @@ const App = () => {
   };
 
   const executeSubscribe = async (subType) => {
-    // 'RECURRING' or 'ONE_TIME'
     if (!user) {
       setLoginOpen(true);
       return;
@@ -458,7 +457,7 @@ const App = () => {
       const { id: order_id, amount, currency } = orderRes.data;
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use Env Variable
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount,
         currency,
         name: "Purchase Content",
@@ -565,14 +564,14 @@ const App = () => {
         name: "Suno Audiobook Premium",
         description: "1 Month Subscription",
         order_id,
-        prefill: { name: user.name, email: user.email }, // Auto-fill user details
+        prefill: { name: user.name, email: user.email },
         handler: async function (response) {
           try {
             await api.post("/payment/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              type: "SUBSCRIPTION_ONE_TIME", // Ensure this matches the order type
+              type: "SUBSCRIPTION_ONE_TIME",
             });
             toast.success("Welcome to Premium!");
             window.location.reload();
@@ -608,7 +607,7 @@ const App = () => {
 
   const fetchAdminData = async () => {
     try {
-      const res = await api.get("/audio?limit=50"); // Fetch larger list for admin
+      const res = await api.get("/audio?limit=50");
       const songList = res.data.data || [];
       const mapped = songList.map((s) => ({ ...s, img: s.thumbnail }));
       setAdminPlaylists(mapped);
@@ -662,7 +661,7 @@ const App = () => {
   };
 
   const handleEditClick = (playlist) => {
-    setEditingPlaylist(playlist); // Set data to pre-fill modal
+    setEditingPlaylist(playlist);
     setManagePlaylistOpen(true);
   };
 
@@ -700,8 +699,7 @@ const App = () => {
     const canPlay = isAdmin || isPremium || isOwner || item.isFree || hasFreeEpisodes || ownsAnyEpisode;
 
     if (canPlay) {
-      // Spoof playlist wrapper as free to bypass AudioPlayer's playlist-level lock,
-      // ensuring it relies on individual episode locks instead.
+
       const trackToPlay = { ...item };
 
       if (isOwner) trackToPlay.isFree = true;
@@ -718,7 +716,7 @@ const App = () => {
       setCurrentTrack(trackToPlay);
       setIsPlaying(true);
     } else {
-      handleBuy(item); // Show purchase modal if locked
+      handleBuy(item);
     }
   };
 
@@ -749,7 +747,6 @@ const App = () => {
     setUser(updatedUser);
   };
 
-  // ADMIN: Handle Upload / Update
   const handleSavePlaylist = async (formData, isUpdate, id) => {
     try {
       if (isUpdate && id) {
@@ -782,7 +779,7 @@ const App = () => {
       try {
         await api.delete(`/audio/playlist/${id}`);
         toast.success("Playlist Deleted");
-        fetchSongs(); // Refresh list
+        fetchSongs();
       } catch (err) {
         console.error(err);
         toast.error("Delete failed");
@@ -812,7 +809,7 @@ const App = () => {
   }
 
   const getFilteredPlaylists = (cat) => {
-    if (cat === "Trending") return playlists.slice(0, 5); // Just random logic for demo
+    if (cat === "Trending") return playlists.slice(0, 5);
     return playlists.filter(
       (p) => p.category === cat || (cat === "Popular" && p.isFree)
     );
@@ -1063,14 +1060,12 @@ const App = () => {
             </table>
           </div>
 
-          {/* MOBILE VIEW (Cards) */}
           <div className="md:hidden space-y-4">
             {playlists.map((p) => (
               <div
                 key={p.id}
                 className="bg-[#181825] border border-white/10 rounded-2xl p-4 shadow-lg"
               >
-                {/* Card Top */}
                 <div className="flex gap-4">
                   <img
                     src={p.thumbnail || "https://placehold.co/80"}
@@ -1092,7 +1087,6 @@ const App = () => {
                   </div>
                 </div>
 
-                {/* Card Actions */}
                 <div className="grid grid-cols-4 gap-2 mt-4 border-t border-white/5 pt-4">
                   <button
                     onClick={() => toggleRow(p.id)}
@@ -1317,7 +1311,6 @@ const App = () => {
     if (page === "about") {
       return (
         <div className="max-w-4xl mx-auto px-6 py-16 animate-fade-in">
-          {/* Page Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-black text-[#E50914] mb-4">
               About Suno Audiobook
@@ -1452,17 +1445,14 @@ const App = () => {
     if (page === "support") {
       return (
         <div className="max-w-5xl mx-auto px-6 py-16 animate-fade-in">
-          {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-black text-[#E50914] mb-4">
               Support Center
             </h1>
           </div>
 
-          {/* Content Grid - Responsive: 1 col on mobile, 2 cols on tablet+ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-            {/* Left Column: Contact Info (Your existing code) */}
             <div className="bg-[#181825] p-8 rounded-3xl border border-white/5 shadow-xl hover:border-[#E50914]/30 transition-colors">
               <Phone className="text-[#E50914] mb-6" size={48} />
               <h3 className="text-2xl font-bold text-white mb-4">
@@ -1492,7 +1482,6 @@ const App = () => {
               </div>
             </div>
 
-            {/* Right Column: Social Media (New Code) */}
             <div className="bg-[#181825] p-8 rounded-3xl border border-white/5 shadow-xl hover:border-[#E50914]/30 transition-colors">
               <MessageCircle className="text-[#E50914] mb-6" size={48} />
               <h3 className="text-2xl font-bold text-blue-400 mb-4 underline underline-offset-4">
@@ -1502,14 +1491,12 @@ const App = () => {
               </h3>
 
               <div className="space-y-4">
-                {/* X (Formerly Twitter) */}
                 <a
                   href="https://x.com/Laxu_kumar_?t=NtFJE9425F_rJtYLVbwYzw&s=09"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-4 text-gray-200 bg-white/5 p-4 rounded-xl hover:bg-white/10 hover:translate-x-1 transition-all group"
                 >
-                  {/* Using Twitter icon for X, usually acceptable, or replace with custom SVG */}
                   <TwitterIcon size={24} className="text-[#E50914] group-hover:text-white transition-colors" />
                   <div>
                     <span className="block text-xs text-gray-500 uppercase font-bold">
@@ -1519,7 +1506,6 @@ const App = () => {
                   </div>
                 </a>
 
-                {/* Telegram */}
                 <a
                   href="https://t.me/Suno_Audiobook"
                   target="_blank"
@@ -1535,7 +1521,6 @@ const App = () => {
                   </div>
                 </a>
 
-                {/* Instagram */}
                 <a
                   href="https://www.instagram.com/audio_series_?igsh=M2x5ajZ5eGkyeWti"
                   target="_blank"
@@ -1629,7 +1614,6 @@ const App = () => {
         onSearchChange={setSearchQuery}
       />
 
-      {/* FLOATING COIN WIDGET */}
       {user && page === "home" && user.role === "USER" && (
         <div
           onClick={() => { setSelectedItemForPurchase(null); setCoinModalOpen(true); }}
@@ -1669,7 +1653,7 @@ const App = () => {
         onLogin={() => setLoginOpen(true)}
       />
 
-      {/* MODALS */}
+      {/*  */}
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
       <LogoutModal
         isOpen={logoutOpen}
@@ -1704,7 +1688,6 @@ const App = () => {
         onSuccess={fetchSongs}
       />
 
-      {/* GLOBAL AUDIO PLAYER */}
       <AudioPlayer
         track={currentTrack}
         isPlaying={isPlaying}

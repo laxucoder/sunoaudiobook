@@ -37,7 +37,7 @@ router.post(
   "/playlist/:playlistId/add",
   protect,
   adminOnly,
-  upload.fields([{ name: "audioFiles", maxCount: 20 }]), // Only audio needed
+  upload.fields([{ name: "audioFiles", maxCount: 20 }]),
   addEpisodes,
 );
 
@@ -46,7 +46,7 @@ router.put(
   protect,
   adminOnly,
   upload.fields([{ name: "thumbnail", maxCount: 1 }]),
-  updateAudio,
+  updatePlaylist,
 );
 
 router.delete("/playlist/:id", protect, adminOnly, deletePlaylist);

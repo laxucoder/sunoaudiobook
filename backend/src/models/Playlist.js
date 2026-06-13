@@ -14,12 +14,12 @@ const Playlist = sequelize.define(
     description: DataTypes.TEXT,
     thumbnailUrl: DataTypes.STRING,
     playCount: { type: DataTypes.INTEGER, defaultValue: 0 },
-    // Metadata
+
     category: { type: DataTypes.STRING, defaultValue: "General" },
     isFree: { type: DataTypes.BOOLEAN, defaultValue: false },
     price: { type: DataTypes.INTEGER, defaultValue: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = Playlist;

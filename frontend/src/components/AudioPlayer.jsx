@@ -198,8 +198,8 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
     <div
       className={`fixed z-[90] bg-[#0a0a14] border-t border-white/10 overflow-hidden left-0 right-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
         ${isExpanded
-          ? 'bottom-0 h-dvh'  // Expanded: Covers entire screen (including nav)
-          : 'bottom-18 md:bottom-0 h-24' // Minimized: Lifts up 72px on mobile to show Nav, sits at 0 on desktop
+          ? 'bottom-0 h-dvh'
+          : 'bottom-18 md:bottom-0 h-24'
         }`}
     >
       <audio
@@ -214,14 +214,12 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
       <div className={`flex w-full h-full transition-opacity duration-500 ${isExpanded ? 'opacity-100 visible delay-100' : 'opacity-0 invisible absolute top-0 left-0 pointer-events-none'}`}>
 
         <div className="flex-1 flex flex-col relative h-full">
-          {/* Top Bar */}
           <div className="flex justify-between items-center p-6 md:p-8">
             <button onClick={() => setIsExpanded(false)} className="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-full transition-colors"><ChevronDown size={32} /></button>
             <span className="text-xs uppercase tracking-widest text-gray-500 font-bold hidden md:block">Now Playing</span>
             <button onClick={() => setShowQueueMobile(!showQueueMobile)} className="lg:hidden text-gray-400 hover:text-[#E50914]"><ListMusic size={28} /></button>
           </div>
 
-          {/* Main Content */}
           <div className="flex-1 flex flex-col justify-center items-center px-8 pb-20 relative">
             <img src={displayImage} alt="Cover" className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] object-cover mb-8 md:mb-12 animate-fade-in" />
 
@@ -230,14 +228,13 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
               <p className="text-lg text-gray-400">{displayArtist}</p>
             </div>
 
-            {/* Progress Bar */}
+
             <div className="w-full max-w-2xl flex items-center gap-4 text-xs font-medium text-gray-400 mb-8">
               <span>{formatTime(currentTime)}</span>
               <input type="range" min="0" max={duration || 0} value={currentTime} onChange={handleSeek} className="flex-1 h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#E50914] hover:h-2 transition-all" />
               <span>{formatTime(duration)}</span>
             </div>
 
-            {/* Playback Controls */}
             <div className="flex items-center gap-10 md:gap-14 mb-8">
               <button onClick={playPrev} className={`text-gray-400 hover:text-white transition transform active:scale-95 ${currentIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}><SkipBack size={36} /></button>
 
@@ -248,7 +245,6 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
               <button onClick={playNext} className={`text-gray-400 hover:text-white transition transform active:scale-95 ${currentIndex === queue.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}><SkipForward size={36} /></button>
             </div>
 
-            {/* Volume and Speed Controls (Floating Island) */}
             <div className="flex items-center gap-4 bg-[#181825] py-2 px-4 rounded-full border border-white/10 shadow-xl">
               <button
                 onClick={toggleSpeed}
@@ -267,7 +263,6 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
             </div>
           </div>
 
-          {/* Up Next Popup */}
           {nextEpisode && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-[#181825]/90 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full flex items-center gap-3 animate-slide-up shadow-xl max-w-[90%] md:max-w-md cursor-pointer hover:bg-[#202030]" onClick={playNext}>
               <div className="bg-[#E50914] p-1.5 rounded-full">
@@ -282,7 +277,6 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
           )}
         </div>
 
-        {/* Desktop Queue */}
         <div className="hidden lg:block w-100 xl:w-112.5">
           <QueueList
             queue={queue}
@@ -298,7 +292,6 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
           />
         </div>
 
-        {/* Mobile Queue Modal */}
         {showQueueMobile && (
           <div className="absolute inset-0 bg-black/95 z-50 lg:hidden animate-fade-in flex flex-col">
             <div className="flex justify-end p-6">
@@ -320,7 +313,6 @@ const AudioPlayer = ({ track, isPlaying, togglePlay, close, user, onRequirePurch
         )}
       </div>
 
-      {/* Mini Player (Bottom Bar) */}
       <div className={`flex items-center justify-between px-4 md:px-8 h-full w-full absolute top-0 left-0 transition-opacity duration-300 ${isExpanded ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible delay-200'}`}>
         <div className="flex items-center gap-4 w-[40%] cursor-pointer" onClick={() => setIsExpanded(true)}>
           <img src={displayImage} className="w-14 h-14 rounded-lg object-cover shadow-md" alt="mini" />

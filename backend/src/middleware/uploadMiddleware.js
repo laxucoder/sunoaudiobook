@@ -1,7 +1,6 @@
 const multer = require("multer");
 const path = require("path");
 
-// Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.mimetype.startsWith("audio/")) {
@@ -12,12 +11,11 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${Math.round(
-      Math.random() * 1e9
+      Math.random() * 1e9,
     )}${path.extname(file.originalname)}`;
     cb(null, uniqueName);
   },
 });
-
 
 const fileFilter = (req, file, cb) => {
   if (
@@ -32,5 +30,5 @@ const fileFilter = (req, file, cb) => {
 
 module.exports = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  limits: { fileSize: 50 * 1024 * 1024 },
 });

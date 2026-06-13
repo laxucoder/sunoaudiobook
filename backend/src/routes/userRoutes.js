@@ -8,9 +8,8 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-
 router.get("/profile", protect, getProfile);
-router.put("/profile", protect, upload.single('avatar'), updateProfile); // <--- Updated
+router.put("/profile", protect, upload.single("avatar"), updateProfile);
 router.get("/library", protect, getMyLibrary);
 
 module.exports = router;

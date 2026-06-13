@@ -6,7 +6,6 @@ import api from '../../utils/api';
 const SubscriptionModal = ({ isOpen, onClose, user, onUpgrade, onUpdateUser, price }) => {
   if (!isOpen) return null;
 
-  // Default to 499 if price prop isn't loaded yet
   const displayPrice = price || 499;
 
   const expiryDate = user.subscriptionEndDate
@@ -77,7 +76,7 @@ const SubscriptionModal = ({ isOpen, onClose, user, onUpgrade, onUpdateUser, pri
             </div>
 
             <button
-              onClick={onUpgrade} // Triggers the One-Time flow passed from Parent
+              onClick={onUpgrade}
               className="w-full py-4 bg-[#E50914] text-white font-black rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-900/30 text-lg flex items-center justify-center gap-2"
             >
               <CreditCard size={20} /> Get Premium (1 Month)

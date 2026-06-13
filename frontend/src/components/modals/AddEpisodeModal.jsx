@@ -37,7 +37,7 @@ const AddEpisodeModal = ({ isOpen, onClose, playlist, onSuccess }) => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       toast.success("Episodes added successfully!");
-      onSuccess(); // Refresh data
+      onSuccess();
       onClose();
       setAudioFiles([]);
       setIsFree(playlist.isFree || false);

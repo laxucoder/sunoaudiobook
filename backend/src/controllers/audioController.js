@@ -39,7 +39,6 @@ exports.uploadAudio = async (req, res) => {
         console.error("Meta error", e);
       }
       const episode = await Audio.create({
-        // If it's a series, name it "Title - Ep 1", "Title - Ep 2"
         title: audioFiles.length > 1 ? `${title} - Episode ${i + 1}` : title,
         artist,
         category: category || "New & Hot",
@@ -63,7 +62,6 @@ exports.uploadAudio = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    // Cleanup on fail
     if (req.files?.["audioFiles"]) {
       req.files["audioFiles"].forEach((f) => fs.unlink(f.path, () => {}));
     }
@@ -178,7 +176,6 @@ exports.updatePlaylist = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-// 2. STREAM AUDIO (Sequelize Version)
 exports.streamAudio = async (req, res) => {
   try {
     const { audioId } = req.params;
@@ -191,7 +188,7 @@ exports.streamAudio = async (req, res) => {
         where: { id: audio.playlistId },
       });
     }
-    //
+
     const absolutePath = path.resolve(audio.storagePath);
     if (!fs.existsSync(absolutePath))
       return res.status(404).send("File missing");
@@ -213,14 +210,12 @@ exports.streamAudio = async (req, res) => {
         });
       }
 
-      // --- NEW EXPIRY LOGIC ---
       const checkAccess = (purchase) => {
         if (!purchase) return false;
-        // If it has an expiry date, check if it's in the future
         if (purchase.expiresAt) {
           return new Date() < new Date(purchase.expiresAt);
         }
-        return true; // If no expiry set (legacy data), allow access
+        return true;
       };
 
       if (checkAccess(audioPurchase) || checkAccess(playlistPurchase))
@@ -388,7 +383,6 @@ exports.addEpisodes = async (req, res) => {
       }
 
       const episode = await Audio.create({
-        // Naming convention: "Series Title - Episode X"
         title: `${playlist.title} - Episode ${nextEpisodeNum}`,
         artist: playlist.artist,
         category: playlist.category,

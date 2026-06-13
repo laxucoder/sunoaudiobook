@@ -19,7 +19,7 @@ const MobileBottomNav = ({ activePage, setPage, user, onLogin }) => {
       id: "support",
       label: "Support",
       icon: Mail,
-      action: () => setPage("support") // Or scroll to specific section
+      action: () => setPage("support")
     },
     {
       id: "profile",
@@ -36,7 +36,6 @@ const MobileBottomNav = ({ activePage, setPage, user, onLogin }) => {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a14]/95 backdrop-blur-lg border-t border-white/10 pb-safe pt-2 z-50 flex justify-between items-center px-6">
       {navItems.map((item) => {
-        // Determine if this tab is active
         const isActive =
           activePage === item.id ||
           (item.id === "library" && activePage === "profile") ||

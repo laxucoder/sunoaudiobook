@@ -21,7 +21,6 @@ router.put("/coin-bundles", protect, adminOnly, updateCoinBundles);
 router.post("/order", protect, createOrder);
 router.post("/verify", protect, verifyPayment);
 router.post("/cancel-subscription", protect, cancelSubscription);
-// Make sure 'authMiddleware' handles authorization logic
 router.post("/unlock-with-coin", protect, unlockWithCoin);
 
 module.exports = router;
