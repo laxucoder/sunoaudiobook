@@ -152,10 +152,6 @@ Users can purchase different coin packages and use their balance to access premi
 
 ### Database
 
-> Add your actual database here.
-
-Example:
-
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 
 ### Services & Infrastructure
