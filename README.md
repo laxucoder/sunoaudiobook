@@ -156,7 +156,7 @@ Users can purchase different coin packages and use their balance to access premi
 
 ### Services & Infrastructure
 
-![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
+![Hostinger VPS](https://img.shields.io/badge/Hostinger%20VPS-673DE6?style=for-the-badge&logo=hostinger&logoColor=white)
 ![Resend](https://img.shields.io/badge/Resend-000000?style=for-the-badge&logo=resend&logoColor=white)
 
 ### Development
